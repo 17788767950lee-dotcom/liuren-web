@@ -48,7 +48,6 @@
     }
 
     #usageInfo { font-size: 15px; color: #d2691e; font-weight: bold; margin-bottom: 10px; }
-
   </style>
 </head>
 <body>
@@ -86,7 +85,8 @@
 
     const stepSequence = [11,27,6];
     const maxFree = 5;
-    let usage = Number(localStorage.getItem("liurenUsage") || 0);
+    let usage = Number(localStorage.getItem("liurenUsage") || 0); // 已使用次数
+    let extraFree = Number(localStorage.getItem("extraFree") || 0); // 支付增加的免费次数
 
     function getLiurenIndex(startIndex, steps){
       return (startIndex + steps) % liurenArr.length;
@@ -100,8 +100,8 @@
     }
 
     function updateUsageInfo() {
-      const remaining = Math.max(maxFree - usage, 0);
-      document.getElementById("usageInfo").textContent = 
+      const remaining = Math.max(maxFree + extraFree - usage, 0);
+      document.getElementById("usageInfo").textContent =
           `你已使用 ${usage} 次，还剩 ${remaining} 次免费`;
     }
 
@@ -114,11 +114,13 @@
 
       document.getElementById("result").textContent = "";
 
-      if(usage >= maxFree){
+      let remaining = Math.max(maxFree + extraFree - usage, 0);
+      if(remaining <= 0){
         document.getElementById("qrContainer").style.display = "block";
         return;
       }
 
+      // 传统农历固定示例
       let lunarDate = "腊月 廿八 午时";
 
       let start = 0;
@@ -143,29 +145,28 @@ ${liurenArr[hourIndex].desc}
 
     // 点击测算
     document.getElementById("calculate").addEventListener("click", ()=>{
-      if(usage < maxFree){
-        usage++;
-        localStorage.setItem("liurenUsage", usage);
-        updateUsageInfo();
+      let remaining = Math.max(maxFree + extraFree - usage, 0);
+      if (remaining <= 0){
+        document.getElementById("qrContainer").style.display = "block";
+        return;
       }
+      usage++;
+      localStorage.setItem("liurenUsage", usage);
+      updateUsageInfo();
       calculateLiuren();
     });
 
     // 点击已支付
     document.getElementById("paid").addEventListener("click", ()=>{
-      // 隐藏二维码
-      document.getElementById("qrContainer").style.display = "none";
+      // 增加额外免费次数
+      extraFree++;
+      localStorage.setItem("extraFree", extraFree);
 
-      // 增加次数
-      usage++;
-      localStorage.setItem("liurenUsage", usage);
-      updateUsageInfo();
-
-      // 支付成功提示
+      // 弹窗提示
       alert("支付成功，剩余免费次数 +1！");
 
-      // 生成测算结果
-      calculateLiuren();
+      // 隐藏二维码并刷新页面
+      location.reload();
     });
 
     // 查看历史记录
