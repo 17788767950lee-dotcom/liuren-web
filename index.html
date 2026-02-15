@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>六任测算2026021514</title>
+  <title>六任测算</title>
   <style>
     body {
       font-family: "微软雅黑", sans-serif;
@@ -12,19 +12,20 @@
     }
     h1 { text-align: center; }
     input, button { font-size: 16px; padding: 5px; margin: 5px 0; width: 100%; }
-    #result { margin-top: 20px; white-space: pre-wrap; }
+    #result, #history { margin-top: 20px; white-space: pre-wrap; border:1px solid #ddd; padding:10px; }
     .qr-container { text-align:center; margin-top:20px; }
     .qr-container img { width:200px; height:auto; display:block; margin:0 auto; }
   </style>
 </head>
 <body>
-  <h1>六壬测算2026021514</h1>
+  <h1>六任测算</h1>
   <p>此方法适用于犹豫、心血来潮的状态</p >
   
   <label>请输入你要算的事情：</label>
   <input type="text" id="question" placeholder="输入问题">
 
   <button id="calculate">六任测算</button>
+  <button id="viewHistory">查看历史记录</button>
 
   <div id="result"></div>
 
@@ -33,6 +34,8 @@
     < img src="alipay_qr.png" alt="支付宝二维码">
     <button id="paid">已支付</button>
   </div>
+
+  <div id="history" style="display:none;"></div>
 
   <script>
     // 六任顺序及解释
@@ -50,12 +53,20 @@
     const maxFree = 3; // 前3次免费
     let usage = Number(localStorage.getItem("liurenUsage") || 0);
 
+    // 获取六任下标
     function getLiurenIndex(startIndex, steps){
       return (startIndex + steps) % liurenArr.length;
     }
 
+    function saveHistory(text){
+      let history = JSON.parse(localStorage.getItem("liurenHistory") || "[]");
+      history.push(text);
+      localStorage.setItem("liurenHistory", JSON.stringify(history));
+    }
+
     function calculateLiuren(){
-      if(!document.getElementById("question").value){
+      const question = document.getElementById("question").value.trim();
+      if(!question){
         alert("请输入要算的事情！");
         return;
       }
@@ -83,6 +94,7 @@
       let hourIndex = getLiurenIndex(dayIndex, hourStep);
 
       let resultText = `
+问题：${question}
 传统农历日期：${lunarDate}
 从${liurenArr[start].name}开始走${monthStep}步 → 到达: ${liurenArr[monthIndex].name}
 从${liurenArr[monthIndex].name}开始走${dayStep}步 → 到达: ${liurenArr[dayIndex].name}
@@ -93,6 +105,9 @@ ${liurenArr[hourIndex].desc}
 `;
 
       document.getElementById("result").textContent = resultText;
+
+      // 保存历史
+      saveHistory(resultText);
     }
 
     document.getElementById("calculate").addEventListener("click", calculateLiuren);
@@ -104,7 +119,18 @@ ${liurenArr[hourIndex].desc}
       document.getElementById("qrContainer").style.display = "none";
       calculateLiuren();
     });
+
+    // 查看历史记录
+    document.getElementById("viewHistory").addEventListener("click", ()=>{
+      let history = JSON.parse(localStorage.getItem("liurenHistory") || "[]");
+      if(history.length === 0){
+        alert("暂无历史记录");
+        return;
+      }
+      document.getElementById("history").style.display = "block";
+      document.getElementById("history").textContent = history.join("\n------------------------\n");
+      window.scrollTo(0, document.getElementById("history").offsetTop);
+    });
   </script>
 </body>
 </html>
-
