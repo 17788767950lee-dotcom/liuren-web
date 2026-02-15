@@ -3,19 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小六壬在線推算</title>
+  <title>小六壬在線推算 - 傳承版</title>
   <style>
     body { font-family: "微软雅黑", sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fdf6e3; color: #333; line-height: 1.6; }
-    h1 { text-align: center; color: #d2691e; border-bottom: 2px solid #d2691e; padding-bottom: 10px; }
-    .info-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    #usageInfo { font-weight: bold; color: #d2691e; text-align: center; }
+    h1 { text-align: center; color: #d2691e; border-bottom: 2px solid #d2691e; padding-bottom: 10px; margin-bottom: 10px; }
+    
+    /* 說明部分樣式 */
+    details { background: #fff; border: 1px solid #d2691e; border-radius: 8px; padding: 10px; margin-bottom: 20px; }
+    summary { font-weight: bold; color: #d2691e; cursor: pointer; outline: none; }
+    .method-desc { font-size: 14px; color: #555; margin-top: 10px; }
+    .method-desc b { color: #d2691e; }
+
+    .info-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
+    #usageInfo { font-weight: bold; color: #d2691e; }
+    
     input[type="text"] { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-    button { width: 100%; padding: 14px; background-color: #d2691e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
-    button:hover { background-color: #b25014; }
-    #result { margin-top: 20px; padding: 15px; background: #fffaf0; border: 2px solid #d2691e; border-radius: 8px; display: none; white-space: pre-wrap; }
+    
+    .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    button { flex: 1; padding: 14px; background-color: #d2691e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.3s; }
+    button#viewHistoryBtn { background-color: #8b4513; }
+    button:hover { opacity: 0.9; }
+    
+    #result, #historyBox { margin-top: 20px; padding: 15px; background: #fffaf0; border: 2px solid #d2691e; border-radius: 8px; display: none; white-space: pre-wrap; }
+    #historyBox { border-color: #8b4513; max-height: 400px; overflow-y: auto; font-size: 14px; }
+    .history-item { border-bottom: 1px dashed #ccc; padding: 10px 0; }
+
     .qr-container { display: none; text-align: center; border: 2px dashed #d2691e; padding: 20px; background: #fff; margin-top: 20px; border-radius: 10px; }
     .qr-container img { width: 220px; height: 220px; margin: 15px 0; border: 1px solid #eee; }
-    .pay-btn { background-color: #28a745; }
+    .pay-btn { background-color: #28a745; width: 100%; }
     .footer { text-align: center; font-size: 12px; color: #999; margin-top: 40px; }
   </style>
 </head>
@@ -23,71 +38,86 @@
 
   <h1>☯ 小六壬在線推算</h1>
   
+  <details>
+    <summary>查看小六壬推算法說明</summary>
+    <div class="method-desc">
+      <p><b>由來：</b>小六壬又稱“李淳風六壬時課”，是中國傳統曆法中一種簡易、快速的占卜方法。相傳由唐代天官大師李淳風所創，因其只需在手掌上推算，故又名“掐指一算”。</p >
+      <p><b>原理：</b>依據農曆的<b>月、日、時</b>三個參數，在“大安、留連、速喜、赤口、小吉、空亡”六個狀態中循環推算。每個結果代表不同的吉凶趨勢。</p >
+      <ul>
+        <li><b>大安：</b>主吉祥、平穩、事成。</li>
+        <li><b>留連：</b>主延緩、糾纏、難成。</li>
+        <li><b>速喜：</b>主驚喜、迅速、好消息。</li>
+        <li><b>赤口：</b>主口舌、是非、防小人。</li>
+        <li><b>小吉：</b>主貴人、轉機、和諧。</li>
+        <li><b>空亡：</b>主虛幻、落空、不利。</li>
+      </ul>
+      <p><i>提示：凡事應盡力而為，推算結果僅供決策參考，請理性對待。</i></p >
+    </div>
+  </details>
+
+  
+
   <div class="info-card">
-    <div id="usageInfo">正在載入使用數據...</div>
+    <div id="usageInfo">正在載入數據...</div>
   </div>
 
-  <input type="text" id="question" placeholder="輸入你想占卜的事情...">
-  <button id="calculateBtn">立即開始推算</button>
+  <input type="text" id="question" placeholder="輸入你想占卜的事情（如：今日面試）">
+  
+  <div class="btn-group">
+    <button id="calculateBtn">立即推算</button>
+    <button id="viewHistoryBtn">歷史記錄</button>
+  </div>
 
   <div id="result"></div>
+  <div id="historyBox"></div>
 
   <div class="qr-container" id="qrContainer">
-    <p style="color: #e74c3c; font-weight: bold;">免費次數已用完</p >
+    <p style="color: #e74c3c; font-weight: bold; font-size: 18px;">免費次數已用完</p >
     <p>掃碼支付 <b>¥2</b> 解鎖本次測算</p >
-    < img src="alipay_qr.png" alt="支付寶收款碼">
+    <img src="alipay_qr.png" alt="支付寶收款碼">
     <button class="pay-btn" id="confirmPayBtn">我已支付，立即解鎖結果</button>
   </div>
 
+  <div class="footer">
+    傳承千年智慧 ‧ 洞察當下機緣
+  </div>
+
   <script>
-    /**
-     * 內置農曆轉換工具 (簡化版)
-     * 解決外部庫加載失敗導致的 ReferenceError
-     */
+    // 內置農曆與時辰工具
     const LunarTool = {
-      // 獲取當前農曆月日和時辰
       getLunarInfo() {
         const date = new Date();
-        // 使用 Intl 對象獲取農曆數據 (現代瀏覽器原生支持)
-        const lunarStr = new Intl.DateTimeFormat('zh-u-ca-chinese', {
-          month: 'numeric', day: 'numeric'
-        }).format(date);
-        
-        // 解析格式如 "正月 15" 或 "1/15"
+        const lunarStr = new Intl.DateTimeFormat('zh-u-ca-chinese', { month: 'numeric', day: 'numeric' }).format(date);
         const parts = lunarStr.match(/(\d+)/g);
         const lMonth = parseInt(parts[0]);
         const lDay = parseInt(parts[1]);
-        
         const hour = date.getHours();
         const hourIdx = Math.floor((hour + 1) / 2) % 12 + 1;
-        const hourName = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"][Math.floor((hour + 1) / 2) % 12];
-        
-        return { lMonth, lDay, hourIdx, hourName };
+        const hourNames = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+        return { lMonth, lDay, hourIdx, hourName: hourNames[Math.floor((hour + 1) / 2) % 12], fullTime: date.toLocaleString() };
       }
     };
 
     const liurenData = [
-      { name: "大安", type: "吉", desc: "大安事事昌，失物去不遠，宅舍保安康。" },
-      { name: "留連", type: "凶", desc: "留連事難成，官事只宜緩，去者未回程。" },
-      { name: "速喜", type: "吉", desc: "速喜喜來臨，求財向南行，逢人路上尋。" },
-      { name: "赤口", type: "凶", desc: "赤口主口舌，官非切宜防，行人有驚慌。" },
-      { name: "小吉", type: "吉", desc: "小吉最吉祥，路上好商量，失物在坤方。" },
-      { name: "空亡", type: "凶", desc: "空亡事不祥，求財無利益，行人有災殃。" }
+      { name: "大安", type: "吉", desc: "大安事事昌，求財在南方。失物去不遠，宅舍保安康。" },
+      { name: "留連", type: "凶", desc: "留連事難成，求謀日未明。官事只宜緩，去者未回程。" },
+      { name: "速喜", type: "吉", desc: "速喜喜來臨，求財向南行。失物午未間，逢人路上尋。" },
+      { name: "赤口", type: "凶", desc: "赤口主口舌，官非切宜防。失物急去尋，行人有驚慌。" },
+      { name: "小吉", type: "吉", desc: "小吉最吉祥，路上好商量。陰人來報喜，失物在坤方。" },
+      { name: "空亡", type: "凶", desc: "空亡事不祥，陰人少乖張。求財無利益，行人有災殃。" }
     ];
 
     const FREE_LIMIT = 5;
 
-    function getDB() {
-      return {
-        u: parseInt(localStorage.getItem('lr_u') || '0'),
-        e: parseInt(localStorage.getItem('lr_e') || '0')
-      };
-    }
+    const DB = {
+      get() { return { u: parseInt(localStorage.getItem('lr_u') || '0'), e: parseInt(localStorage.getItem('lr_e') || '0'), h: JSON.parse(localStorage.getItem('lr_h') || '[]') }; },
+      save(u, e, h) { localStorage.setItem('lr_u', u); localStorage.setItem('lr_e', e); localStorage.setItem('lr_h', JSON.stringify(h)); }
+    };
 
     function refreshUI() {
-      const db = getDB();
-      const remain = (FREE_LIMIT + db.e) - db.u;
-      document.getElementById('usageInfo').innerHTML = `可用次數：${Math.max(remain, 0)} <small>(已用:${db.u} 購買:${db.e})</small>`;
+      const data = DB.get();
+      const remain = (FREE_LIMIT + data.e) - data.u;
+      document.getElementById('usageInfo').innerHTML = `可用次數：<span style="font-size:1.4em;">${Math.max(remain, 0)}</span> <br> <small>(免費:${FREE_LIMIT} | 已購:${data.e} | 已用:${data.u})</small>`;
       if (remain > 0) document.getElementById('qrContainer').style.display = 'none';
     }
 
@@ -96,34 +126,44 @@
       if (!q) return alert("請輸入問題");
 
       const info = LunarTool.getLunarInfo();
-      // 小六壬公式：(月+日+時-3) % 6
       const resIdx = (info.lMonth + info.lDay + info.hourIdx - 3) % 6;
       const res = liurenData[resIdx];
 
-      const div = document.getElementById('result');
-      div.style.display = 'block';
-      div.innerHTML = `<strong>【農曆】</strong>：${info.lMonth}月${info.lDay} ${info.hourName}時\n<strong>【所求】</strong>：${q}\n<hr><strong>【結果】</strong>：${res.name} (${res.type})\n<strong>【詳解】</strong>：${res.desc}`;
+      const resultHTML = `【時間】：${info.fullTime}\n【農曆】：${info.lMonth}月${info.lDay} ${info.hourName}時\n【所求】：${q}\n------------------------\n【結果】：${res.name} (${res.type})\n【詳解】：${res.desc}`;
 
-      // 扣除次數
-      localStorage.setItem('lr_u', getDB().u + 1);
+      const resDiv = document.getElementById('result');
+      resDiv.style.display = 'block';
+      resDiv.innerHTML = `<strong>測算結果：</strong>\n${resultHTML}`;
+      document.getElementById('historyBox').style.display = 'none';
+
+      const data = DB.get();
+      data.u += 1;
+      data.h.unshift(resultHTML);
+      if (data.h.length > 30) data.h.pop();
+      DB.save(data.u, data.e, data.h);
       refreshUI();
     }
 
     document.getElementById('calculateBtn').onclick = function() {
-      const db = getDB();
-      if ((FREE_LIMIT + db.e) - db.u > 0) {
-        doCalc();
-      } else {
-        document.getElementById('qrContainer').style.display = 'block';
-      }
+      const data = DB.get();
+      if ((FREE_LIMIT + data.e) - data.u > 0) doCalc();
+      else { document.getElementById('qrContainer').style.display = 'block'; window.scrollTo(0, document.body.scrollHeight); }
+    };
+
+    document.getElementById('viewHistoryBtn').onclick = function() {
+      const data = DB.get();
+      if (data.h.length === 0) return alert("暫無歷史記錄");
+      const hBox = document.getElementById('historyBox');
+      hBox.style.display = hBox.style.display === 'block' ? 'none' : 'block';
+      document.getElementById('result').style.display = 'none';
+      hBox.innerHTML = `<strong>【歷史記錄（最近30條）】</strong>\n` + data.h.map((item, index) => `<div class="history-item">${index + 1}. ${item}</div>`).join('');
     };
 
     document.getElementById('confirmPayBtn').onclick = function() {
-      // 1. 增加購買次數
-      localStorage.setItem('lr_e', getDB().e + 1);
-      // 2. 刷新UI
+      const data = DB.get();
+      data.e += 1;
+      DB.save(data.u, data.e, data.h);
       refreshUI();
-      // 3. 立即測算
       doCalc();
       alert("解鎖成功！");
     };
