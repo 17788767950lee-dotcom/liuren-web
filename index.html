@@ -1,134 +1,134 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小六壬在線推算</title>
-    <style>
-        body { font-family: "微软雅黑", sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fdf6e3; color: #333; line-height: 1.6; }
-        h1 { text-align: center; color: #d2691e; border-bottom: 2px solid #d2691e; padding-bottom: 10px; }
-        .info-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        #usageInfo { font-weight: bold; color: #d2691e; text-align: center; font-size: 15px; }
-        .input-group { margin: 20px 0; }
-        label { font-weight: bold; display: block; margin-bottom: 8px; }
-        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input[type="text"]:focus { border-color: #d2691e; }
-        button { width: 100%; padding: 14px; background-color: #d2691e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 10px; }
-        button:hover { background-color: #b25014; }
-        #result { margin-top: 20px; padding: 15px; background: #fffaf0; border: 2px solid #d2691e; border-radius: 8px; display: none; white-space: pre-wrap; font-size: 16px; }
-        .qr-container { display: none; text-align: center; border: 2px dashed #d2691e; padding: 20px; background: #fff; margin-top: 20px; border-radius: 10px; }
-        .qr-container img { width: 220px; height: 220px; margin: 15px 0; border: 1px solid #eee; }
-        .pay-btn { background-color: #28a745; }
-        .pay-btn:hover { background-color: #218838; }
-        .footer { text-align: center; font-size: 12px; color: #999; margin-top: 40px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小六壬在線推算</title>
+  <style>
+    body { font-family: "微软雅黑", sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fdf6e3; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #d2691e; border-bottom: 2px solid #d2691e; padding-bottom: 10px; }
+    .info-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    #usageInfo { font-weight: bold; color: #d2691e; text-align: center; }
+    input[type="text"] { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+    button { width: 100%; padding: 14px; background-color: #d2691e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    button:hover { background-color: #b25014; }
+    #result { margin-top: 20px; padding: 15px; background: #fffaf0; border: 2px solid #d2691e; border-radius: 8px; display: none; white-space: pre-wrap; }
+    .qr-container { display: none; text-align: center; border: 2px dashed #d2691e; padding: 20px; background: #fff; margin-top: 20px; border-radius: 10px; }
+    .qr-container img { width: 220px; height: 220px; margin: 15px 0; border: 1px solid #eee; }
+    .pay-btn { background-color: #28a745; }
+    .footer { text-align: center; font-size: 12px; color: #999; margin-top: 40px; }
+  </style>
 </head>
 <body>
 
-<h1>☯ 小六壬在線推算</h1>
+  <h1>☯ 小六壬在線推算</h1>
+  
+  <div class="info-card">
+    <div id="usageInfo">正在載入使用數據...</div>
+  </div>
 
-<div class="info-card">
-    <div id="usageInfo">正在載入數據...</div>
-</div>
+  <input type="text" id="question" placeholder="輸入你想占卜的事情...">
+  <button id="calculateBtn">立即開始推算</button>
 
-<div class="input-group">
-    <label>心中所求之事：</label>
-    <input type="text" id="question" placeholder="例如：今日求財是否順利？">
-</div>
+  <div id="result"></div>
 
-<button id="calculateBtn">立即開始推算</button>
-
-<div id="result"></div>
-
-<div class="qr-container" id="qrContainer">
-    <p style="color: #e74c3c; font-weight: bold; font-size: 18px;">免費次數已用完</p >
-    <p>掃碼支付 <b>¥2</b> 即可解鎖本次測算</p >
-    <img src="alipay_qr.png" alt="支付寶收款碼">
+  <div class="qr-container" id="qrContainer">
+    <p style="color: #e74c3c; font-weight: bold;">免費次數已用完</p >
+    <p>掃碼支付 <b>¥2</b> 解鎖本次測算</p >
+    < img src="alipay_qr.png" alt="支付寶收款碼">
     <button class="pay-btn" id="confirmPayBtn">我已支付，立即解鎖結果</button>
-</div>
+  </div>
 
-<div class="footer">
-    此算法基於唐代李淳風《六壬時課》<br>
-    僅供參考，請理性對待
-</div>
-
-<script>
-    // 內置簡化版農曆算法 (避免外部庫失效)
-    const LunarHelp = {
-        // 這是一個簡化的農曆獲取方式，GitHub Pages 最穩定的方案是獲取當前月日數字
-        getNow() {
-            const now = new Date();
-            // 由於 JavaScript 獲取農曆較複雜，這裡使用一個簡單的估算或提示用戶
-            // 為了 100% 運行，我們直接利用 Date 對象模擬農曆步數，或者你可以手動校對
-            return {
-                month: now.getMonth() + 1, // 暫以公曆月替代，實際開發建議引入本地 JS 庫
-                day: now.getDate(),
-                hourIdx: Math.floor((now.getHours() + 1) / 2) % 12 + 1,
-                hourName: ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"][Math.floor((now.getHours() + 1) / 2) % 12]
-            };
-        }
+  <script>
+    /**
+     * 內置農曆轉換工具 (簡化版)
+     * 解決外部庫加載失敗導致的 ReferenceError
+     */
+    const LunarTool = {
+      // 獲取當前農曆月日和時辰
+      getLunarInfo() {
+        const date = new Date();
+        // 使用 Intl 對象獲取農曆數據 (現代瀏覽器原生支持)
+        const lunarStr = new Intl.DateTimeFormat('zh-u-ca-chinese', {
+          month: 'numeric', day: 'numeric'
+        }).format(date);
+        
+        // 解析格式如 "正月 15" 或 "1/15"
+        const parts = lunarStr.match(/(\d+)/g);
+        const lMonth = parseInt(parts[0]);
+        const lDay = parseInt(parts[1]);
+        
+        const hour = date.getHours();
+        const hourIdx = Math.floor((hour + 1) / 2) % 12 + 1;
+        const hourName = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"][Math.floor((hour + 1) / 2) % 12];
+        
+        return { lMonth, lDay, hourIdx, hourName };
+      }
     };
 
     const liurenData = [
-        { name: "大安", type: "吉", desc: "大安事事昌，求財在南方。失物去不遠，宅舍保安康。" },
-        { name: "留連", type: "凶", desc: "留連事難成，求謀日未明。官事只宜緩，去者未回程。" },
-        { name: "速喜", type: "吉", desc: "速喜喜來臨，求財向南行。失物午未間，逢人路上尋。" },
-        { name: "赤口", type: "凶", desc: "赤口主口舌，官非切宜防。失物急去尋，行人有驚慌。" },
-        { name: "小吉", type: "吉", desc: "小吉最吉祥，路上好商量。陰人來報喜，失物在坤方。" },
-        { name: "空亡", type: "凶", desc: "空亡事不祥，陰人少乖張。求財無利益，行人有災殃。" }
+      { name: "大安", type: "吉", desc: "大安事事昌，失物去不遠，宅舍保安康。" },
+      { name: "留連", type: "凶", desc: "留連事難成，官事只宜緩，去者未回程。" },
+      { name: "速喜", type: "吉", desc: "速喜喜來臨，求財向南行，逢人路上尋。" },
+      { name: "赤口", type: "凶", desc: "赤口主口舌，官非切宜防，行人有驚慌。" },
+      { name: "小吉", type: "吉", desc: "小吉最吉祥，路上好商量，失物在坤方。" },
+      { name: "空亡", type: "凶", desc: "空亡事不祥，求財無利益，行人有災殃。" }
     ];
 
     const FREE_LIMIT = 5;
 
-    function getS() {
-        return {
-            u: parseInt(localStorage.getItem('lr_u') || '0'),
-            e: parseInt(localStorage.getItem('lr_e') || '0')
-        };
+    function getDB() {
+      return {
+        u: parseInt(localStorage.getItem('lr_u') || '0'),
+        e: parseInt(localStorage.getItem('lr_e') || '0')
+      };
     }
 
-    function refresh() {
-        const d = getS();
-        const rem = (FREE_LIMIT + d.e) - d.u;
-        document.getElementById('usageInfo').innerHTML = `可用次數：<span style="font-size:1.4em;">${Math.max(rem, 0)}</span><br><small>已用: ${d.u} | 額外: ${d.e}</small>`;
-        if (rem > 0) document.getElementById('qrContainer').style.display = 'none';
+    function refreshUI() {
+      const db = getDB();
+      const remain = (FREE_LIMIT + db.e) - db.u;
+      document.getElementById('usageInfo').innerHTML = `可用次數：${Math.max(remain, 0)} <small>(已用:${db.u} 購買:${db.e})</small>`;
+      if (remain > 0) document.getElementById('qrContainer').style.display = 'none';
     }
 
-    function run() {
-        const q = document.getElementById('question').value.trim();
-        if(!q) return alert("請輸入問題");
+    function doCalc() {
+      const q = document.getElementById('question').value.trim();
+      if (!q) return alert("請輸入問題");
 
-        const t = LunarHelp.getNow();
-        // 小六壬公式：(月+日+時-3) % 6
-        const idx = (t.month + t.day + t.hourIdx - 3) % 6;
-        const res = liurenData[idx];
+      const info = LunarTool.getLunarInfo();
+      // 小六壬公式：(月+日+時-3) % 6
+      const resIdx = (info.lMonth + info.lDay + info.hourIdx - 3) % 6;
+      const res = liurenData[resIdx];
 
-        const div = document.getElementById('result');
-        div.style.display = 'block';
-        div.innerHTML = `<strong>【時間】</strong>：${t.month}月${t.day}日 ${t.hourName}時\n<strong>【所求】</strong>：${q}\n<hr><strong>【結果】</strong>：${res.name} (${res.type})\n<strong>【詳解】</strong>：${res.desc}`;
+      const div = document.getElementById('result');
+      div.style.display = 'block';
+      div.innerHTML = `<strong>【農曆】</strong>：${info.lMonth}月${info.lDay} ${info.hourName}時\n<strong>【所求】</strong>：${q}\n<hr><strong>【結果】</strong>：${res.name} (${res.type})\n<strong>【詳解】</strong>：${res.desc}`;
 
-        localStorage.setItem('lr_u', getS().u + 1);
-        refresh();
+      // 扣除次數
+      localStorage.setItem('lr_u', getDB().u + 1);
+      refreshUI();
     }
 
     document.getElementById('calculateBtn').onclick = function() {
-        const d = getS();
-        if ((FREE_LIMIT + d.e) - d.u > 0) {
-            run();
-        } else {
-            document.getElementById('qrContainer').style.display = 'block';
-        }
+      const db = getDB();
+      if ((FREE_LIMIT + db.e) - db.u > 0) {
+        doCalc();
+      } else {
+        document.getElementById('qrContainer').style.display = 'block';
+      }
     };
 
     document.getElementById('confirmPayBtn').onclick = function() {
-        localStorage.setItem('lr_e', getS().e + 1); // 先加次數
-        refresh(); // 刷新 UI
-        run(); // 立即運行
-        alert("支付成功！");
+      // 1. 增加購買次數
+      localStorage.setItem('lr_e', getDB().e + 1);
+      // 2. 刷新UI
+      refreshUI();
+      // 3. 立即測算
+      doCalc();
+      alert("解鎖成功！");
     };
 
-    refresh();
-</script>
-
+    refreshUI();
+  </script>
 </body>
 </html>
