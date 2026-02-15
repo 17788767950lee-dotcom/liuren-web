@@ -134,9 +134,11 @@
       return (startIndex + steps) % liurenArr.length;
     }
 
+    // 保存历史记录，带编号
     function saveHistory(text){
       let history = JSON.parse(localStorage.getItem("liurenHistory") || "[]");
-      history.push(text);
+      const recordNumber = history.length + 1;
+      history.push(`${recordNumber}. ${text}`);
       localStorage.setItem("liurenHistory", JSON.stringify(history));
     }
 
@@ -161,10 +163,6 @@
         return;
       }
 
-      usage++;
-      localStorage.setItem("liurenUsage", usage);
-      updateUsageInfo();
-
       let lunarDate = "腊月 廿八 午时";
 
       let start = 0;
@@ -187,14 +185,23 @@ ${liurenArr[hourIndex].desc}
       saveHistory(resultText);
     }
 
-    document.getElementById("calculate").addEventListener("click", calculateLiuren);
+    document.getElementById("calculate").addEventListener("click", ()=>{
+      if(usage < maxFree){
+        usage++;
+        localStorage.setItem("liurenUsage", usage);
+        updateUsageInfo();
+      }
+      calculateLiuren();
+    });
 
-    // 点击已支付后继续
+    // 点击已支付
     document.getElementById("paid").addEventListener("click", ()=>{
       usage++;
       localStorage.setItem("liurenUsage", usage);
-      document.getElementById("qrContainer").style.display = "none";
       updateUsageInfo();
+
+      document.getElementById("qrContainer").style.display = "none";
+
       calculateLiuren();
     });
 
