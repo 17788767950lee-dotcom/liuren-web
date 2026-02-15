@@ -4,183 +4,154 @@
   <meta charset="UTF-8">
   <title>六壬推算法</title>
   <style>
-    body {
-      font-family: "微软雅黑", sans-serif;
-      max-width: 650px;
-      margin: 20px auto;
-      padding: 20px;
-      background: #fdf6e3;
-      color: #333;
-      line-height: 1.6;
-    }
-
+    /* 保持原有的 CSS 不變 */
+    body { font-family: "微软雅黑", sans-serif; max-width: 650px; margin: 20px auto; padding: 20px; background: #fdf6e3; color: #333; line-height: 1.6; }
     h1 { text-align: center; color: #d2691e; }
-
     p { margin: 10px 0; }
     .tip { font-size: 14px; color: #555; margin-bottom: 10px; }
-
-    input[type="text"] {
-      font-size: 16px; padding: 8px; margin: 8px 0 12px 0;
-      width: 100%; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
-    }
-
-    button {
-      font-size: 16px; padding: 10px; margin: 8px 0;
-      width: 100%; border: none; border-radius: 5px;
-      background-color: #d2691e; color: #fff; cursor: pointer; transition: 0.3s;
-    }
+    input[type="text"] { font-size: 16px; padding: 8px; margin: 8px 0 12px 0; width: 100%; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { font-size: 16px; padding: 10px; margin: 8px 0; width: 100%; border: none; border-radius: 5px; background-color: #d2691e; color: #fff; cursor: pointer; transition: 0.3s; }
     button:hover { background-color: #b25014; }
-
-    #result, #history {
-      margin-top: 20px; white-space: pre-wrap;
-      border: 1px solid #dcdcdc; border-radius: 5px;
-      padding: 15px; background-color: #fffaf0;
-    }
-
-    .qr-container {
-      text-align: center; margin-top: 20px; padding: 15px;
-      border: 1px dashed #d2691e; border-radius: 10px; background-color: #fff8f0;
-    }
-
-    .qr-container img {
-      width: 220px; height: auto; display: block; margin: 10px auto;
-      border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.2);
-    }
-
+    #result, #history { margin-top: 20px; white-space: pre-wrap; border: 1px solid #dcdcdc; border-radius: 5px; padding: 15px; background-color: #fffaf0; min-height: 50px; }
+    .qr-container { text-align: center; margin-top: 20px; padding: 15px; border: 1px dashed #d2691e; border-radius: 10px; background-color: #fff8f0; }
+    .qr-container img { width: 220px; height: auto; display: block; margin: 10px auto; border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.2); }
     #usageInfo { font-size: 15px; color: #d2691e; font-weight: bold; margin-bottom: 10px; }
+    .success-msg { color: #28a745; font-weight: bold; }
   </style>
 </head>
 <body>
   <h1>六壬推算</h1>
-  <p class="tip">此方法来自唐代天官李淳风，适用于犹豫、心血来潮时做决策。</p >
-  <p class="tip">每个时辰内只算一次，前5次免费，后续 ¥2/次。</p >
+  <p class="tip">此方法來自唐代天官李淳風，適用於猶豫、心血來潮時做決策。</p >
+  <p id="usageInfo">載入中...</p >
 
-  <p id="usageInfo">你已使用 0 次，还剩 5 次免费</p >
+  <label>請輸入你要計算的事情：</label>
+  <input type="text" id="question" placeholder="例如：今日出行是否順利？">
 
-  <label>请输入你要计算的事情：</label>
-  <input type="text" id="question" placeholder="输入问题">
-
-  <button id="calculate">开始六壬测算</button>
-  <button id="viewHistory">查看历史记录</button>
+  <button id="calculate">開始六壬測算</button>
+  <button id="viewHistory">查看歷史記錄</button>
 
   <div id="result"></div>
 
   <div class="qr-container" id="qrContainer" style="display:none;">
-    <p>请扫描支付 <strong>¥2</strong> 后继续使用：</p >
-    <img src="alipay_qr.png" alt="支付宝二维码">
-    <button id="paid">已支付</button>
+    <p>免費次數已用完，請掃描支付 <strong>¥2</strong> 增加 1 次權限：</p >
+    <img src="alipay_qr.png" alt="支付寶二維碼">
+    <button id="paid" style="background-color: #28a745;">我已完成支付</button>
+    <button id="closePay" style="background-color: #888; margin-top: 5px;">暫不支付</button>
   </div>
 
   <div id="history" style="display:none;"></div>
 
   <script>
     const liurenArr = [
-      {name: "大安", type: "吉", desc:"平安吉祥，诸事顺利，约一周左右可见结果。"},
-      {name: "流连", type: "凶", desc:"事情停滞不前，此行不利，需谨慎行事。"},
-      {name: "速喜", type: "吉", desc:"立竿见影，马上看到结果，适合找寻失物。"},
-      {name: "赤口", type: "凶", desc:"有第三者介入，小人窃财，是非多因人为因素。"},
-      {name: "小吉", type: "吉", desc:"吉祥顺利，但需等待，约两周左右可见结果。"},
-      {name: "空亡", type: "凶", desc:"事情难成，可以断念，建议放弃或另寻他法。"}
+      {name: "大安", type: "吉", desc:"平安吉祥，諸事順利，約一週左右可見結果。"},
+      {name: "留連", type: "凶", desc:"事情停滯不前，此行不利，需謹慎行事。"},
+      {name: "速喜", type: "吉", desc:"立竿見影，馬上看到結果，適合找尋失物。"},
+      {name: "赤口", type: "凶", desc:"有第三者介入，小人竊財，是非多因人為因素。"},
+      {name: "小吉", type: "吉", desc:"吉祥順利，但需等待，約兩週左右可見結果。"},
+      {name: "空亡", type: "凶", desc:"事情難成，可以斷念，建議放棄或另尋他法。"}
     ];
 
-    const stepSequence = [11,27,6];
+    const stepSequence = [11, 27, 6]; 
     const maxFree = 5;
-    let usage = Number(localStorage.getItem("liurenUsage") || 0); // 已使用次数
-    let extraFree = Number(localStorage.getItem("extraFree") || 0); // 支付增加的免费次数
 
-    function getLiurenIndex(startIndex, steps){
+    // 初始化數據
+    let usage = Number(localStorage.getItem("liurenUsage") || 0);
+    let extraPurchased = Number(localStorage.getItem("extraPurchased") || 0);
+
+    function updateUsageInfo() {
+      const totalAllowed = maxFree + extraPurchased;
+      const remaining = Math.max(totalAllowed - usage, 0);
+      document.getElementById("usageInfo").innerHTML = 
+        `你已使用 ${usage} 次，還剩 <span style="font-size:1.2em;">${remaining}</span> 次可用`;
+      
+      // 如果還有次數，隱藏支付框
+      if (remaining > 0) {
+        document.getElementById("qrContainer").style.display = "none";
+      }
+    }
+
+    function getLiurenIndex(startIndex, steps) {
       return (startIndex + steps) % liurenArr.length;
     }
 
-    function saveHistory(text){
+    function saveHistory(text) {
       let history = JSON.parse(localStorage.getItem("liurenHistory") || "[]");
-      const recordNumber = history.length + 1;
-      history.push(`${recordNumber}. ${text}`);
-      localStorage.setItem("liurenHistory", JSON.stringify(history));
+      history.unshift(`${new Date().toLocaleString()}\n${text}`); // 新紀錄排在前面
+      localStorage.setItem("liurenHistory", JSON.stringify(history.slice(0, 20))); // 只存最近20條
     }
 
-    function updateUsageInfo() {
-      const remaining = Math.max(maxFree + extraFree - usage, 0);
-      document.getElementById("usageInfo").textContent =
-          `你已使用 ${usage} 次，还剩 ${remaining} 次免费`;
-    }
-
-    function calculateLiuren(){
+    function executeCalculation() {
       const question = document.getElementById("question").value.trim();
-      if(!question){
-        alert("请输入要算的事情！");
-        return;
-      }
-
-      document.getElementById("result").textContent = "";
-
-      let remaining = Math.max(maxFree + extraFree - usage, 0);
-      if(remaining <= 0){
-        document.getElementById("qrContainer").style.display = "block";
-        return;
-      }
-
-      // 传统农历固定示例
-      let lunarDate = "腊月 廿八 午时";
+      let lunarDate = "臘月 廿八 午時"; // 這裡可根據需要接入真實農曆 API
 
       let start = 0;
       let monthIndex = getLiurenIndex(start, stepSequence[0]);
       let dayIndex = getLiurenIndex(monthIndex, stepSequence[1]);
       let hourIndex = getLiurenIndex(dayIndex, stepSequence[2]);
 
-      let resultText = `
-问题：${question}
-传统农历日期：${lunarDate}
-从${liurenArr[start].name}开始走${stepSequence[0]}步 → 到达: ${liurenArr[monthIndex].name}
-从${liurenArr[monthIndex].name}开始走${stepSequence[1]}步 → 到达: ${liurenArr[dayIndex].name}
-从${liurenArr[dayIndex].name}开始走${stepSequence[2]}步 → 最终到达: ${liurenArr[hourIndex].name}
+      let resultText = `問題：${question}\n最終到達：${liurenArr[hourIndex].name} (${liurenArr[hourIndex].type})\n解義：${liurenArr[hourIndex].desc}`;
 
-${liurenArr[hourIndex].name} (${liurenArr[hourIndex].type})
-${liurenArr[hourIndex].desc}
-`;
-
-      document.getElementById("result").textContent = resultText;
+      document.getElementById("result").innerHTML = `<strong style="color:#d2691e;">【測算結果】</strong>\n${resultText}`;
       saveHistory(resultText);
-    }
-
-    // 点击测算
-    document.getElementById("calculate").addEventListener("click", ()=>{
-      let remaining = Math.max(maxFree + extraFree - usage, 0);
-      if (remaining <= 0){
-        document.getElementById("qrContainer").style.display = "block";
-        return;
-      }
+      
+      // 增加使用次數並儲存
       usage++;
       localStorage.setItem("liurenUsage", usage);
       updateUsageInfo();
-      calculateLiuren();
-    });
+    }
 
-    // 点击已支付
-    document.getElementById("paid").addEventListener("click", ()=>{
-      // 增加额外免费次数
-      extraFree++;
-      localStorage.setItem("extraFree", extraFree);
+    // --- 事件監聽 ---
 
-      // 弹窗提示
-      alert("支付成功，剩余免费次数 +1！");
-
-      // 隐藏二维码并刷新页面
-      location.reload();
-    });
-
-    // 查看历史记录
-    document.getElementById("viewHistory").addEventListener("click", ()=>{
-      let history = JSON.parse(localStorage.getItem("liurenHistory") || "[]");
-      if(history.length === 0){
-        alert("暂无历史记录");
+    // 點擊測算
+    document.getElementById("calculate").addEventListener("click", () => {
+      const question = document.getElementById("question").value.trim();
+      if (!question) {
+        alert("請先輸入你要詢問的事情。");
         return;
       }
-      document.getElementById("history").style.display = "block";
-      document.getElementById("history").textContent = history.join("\n------------------------\n");
-      window.scrollTo(0, document.getElementById("history").offsetTop);
+
+      const totalAllowed = maxFree + extraPurchased;
+      if (usage >= totalAllowed) {
+        document.getElementById("qrContainer").style.display = "block";
+        window.scrollTo(0, document.body.scrollHeight);
+      } else {
+        executeCalculation();
+      }
     });
 
+    // 點擊已支付
+    document.getElementById("paid").addEventListener("click", () => {
+      // 核心邏輯：增加購買次數
+      extraPurchased++;
+      localStorage.setItem("extraPurchased", extraPurchased);
+      
+      alert("支付成功！已為您增加 1 次使用權限。");
+      
+      // 更新介面
+      updateUsageInfo();
+      // 隱藏支付框
+      document.getElementById("qrContainer").style.display = "none";
+    });
+
+    // 關閉支付
+    document.getElementById("closePay").addEventListener("click", () => {
+      document.getElementById("qrContainer").style.display = "none";
+    });
+
+    // 查看歷史
+    document.getElementById("viewHistory").addEventListener("click", () => {
+      let history = JSON.parse(localStorage.getItem("liurenHistory") || "[]");
+      if (history.length === 0) {
+        alert("暫無歷史記錄");
+        return;
+      }
+      const historyDiv = document.getElementById("history");
+      historyDiv.style.display = "block";
+      historyDiv.textContent = "【歷史記錄】\n" + history.join("\n------------------------\n");
+      window.scrollTo(0, historyDiv.offsetTop);
+    });
+
+    // 初始化顯示
     updateUsageInfo();
   </script>
 </body>
