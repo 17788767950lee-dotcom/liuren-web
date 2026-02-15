@@ -14,81 +14,40 @@
       line-height: 1.6;
     }
 
-    h1 {
-      text-align: center;
-      color: #d2691e;
-    }
+    h1 { text-align: center; color: #d2691e; }
 
-    p {
-      margin: 10px 0;
-    }
-
-    .tip {
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 10px;
-    }
+    p { margin: 10px 0; }
+    .tip { font-size: 14px; color: #555; margin-bottom: 10px; }
 
     input[type="text"] {
-      font-size: 16px;
-      padding: 8px;
-      margin: 8px 0 12px 0;
-      width: 100%;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-sizing: border-box;
+      font-size: 16px; padding: 8px; margin: 8px 0 12px 0;
+      width: 100%; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box;
     }
 
     button {
-      font-size: 16px;
-      padding: 10px;
-      margin: 8px 0;
-      width: 100%;
-      border: none;
-      border-radius: 5px;
-      background-color: #d2691e;
-      color: #fff;
-      cursor: pointer;
-      transition: background-color 0.3s;
+      font-size: 16px; padding: 10px; margin: 8px 0;
+      width: 100%; border: none; border-radius: 5px;
+      background-color: #d2691e; color: #fff; cursor: pointer; transition: 0.3s;
     }
-
-    button:hover {
-      background-color: #b25014;
-    }
+    button:hover { background-color: #b25014; }
 
     #result, #history {
-      margin-top: 20px;
-      white-space: pre-wrap;
-      border: 1px solid #dcdcdc;
-      border-radius: 5px;
-      padding: 15px;
-      background-color: #fffaf0;
+      margin-top: 20px; white-space: pre-wrap;
+      border: 1px solid #dcdcdc; border-radius: 5px;
+      padding: 15px; background-color: #fffaf0;
     }
 
     .qr-container {
-      text-align: center;
-      margin-top: 20px;
-      padding: 15px;
-      border: 1px dashed #d2691e;
-      border-radius: 10px;
-      background-color: #fff8f0;
+      text-align: center; margin-top: 20px; padding: 15px;
+      border: 1px dashed #d2691e; border-radius: 10px; background-color: #fff8f0;
     }
 
     .qr-container img {
-      width: 220px;
-      height: auto;
-      display: block;
-      margin: 10px auto;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      width: 220px; height: auto; display: block; margin: 10px auto;
+      border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.2);
     }
 
-    #usageInfo {
-      font-size: 15px;
-      color: #d2691e;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
+    #usageInfo { font-size: 15px; color: #d2691e; font-weight: bold; margin-bottom: 10px; }
 
   </style>
 </head>
@@ -97,7 +56,6 @@
   <p class="tip">此方法来自唐代天官李淳风，适用于犹豫、心血来潮时做决策。</p >
   <p class="tip">每个时辰内只算一次，前5次免费，后续 ¥2/次。</p >
 
-  <!-- 使用次数显示 -->
   <p id="usageInfo">你已使用 0 次，还剩 5 次免费</p >
 
   <label>请输入你要计算的事情：</label>
@@ -134,7 +92,6 @@
       return (startIndex + steps) % liurenArr.length;
     }
 
-    // 保存历史记录，带编号
     function saveHistory(text){
       let history = JSON.parse(localStorage.getItem("liurenHistory") || "[]");
       const recordNumber = history.length + 1;
@@ -142,7 +99,6 @@
       localStorage.setItem("liurenHistory", JSON.stringify(history));
     }
 
-    // 更新页面使用次数
     function updateUsageInfo() {
       const remaining = Math.max(maxFree - usage, 0);
       document.getElementById("usageInfo").textContent = 
@@ -185,6 +141,7 @@ ${liurenArr[hourIndex].desc}
       saveHistory(resultText);
     }
 
+    // 点击测算
     document.getElementById("calculate").addEventListener("click", ()=>{
       if(usage < maxFree){
         usage++;
@@ -196,12 +153,18 @@ ${liurenArr[hourIndex].desc}
 
     // 点击已支付
     document.getElementById("paid").addEventListener("click", ()=>{
+      // 隐藏二维码
+      document.getElementById("qrContainer").style.display = "none";
+
+      // 增加次数
       usage++;
       localStorage.setItem("liurenUsage", usage);
       updateUsageInfo();
 
-      document.getElementById("qrContainer").style.display = "none";
+      // 支付成功提示
+      alert("支付成功，剩余免费次数 +1！");
 
+      // 生成测算结果
       calculateLiuren();
     });
 
@@ -217,7 +180,6 @@ ${liurenArr[hourIndex].desc}
       window.scrollTo(0, document.getElementById("history").offsetTop);
     });
 
-    // 页面加载时更新使用次数
     updateUsageInfo();
   </script>
 </body>
