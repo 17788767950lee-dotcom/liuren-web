@@ -3,42 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小六壬在線推算</title>
+  <title>小六壬在線推算 - 傳承李淳風時課</title>
   <script src="https://cdn.jsdelivr.net/npm/solarlunar@2.0.0/lib/solarlunar.min.js"></script>
   <style>
     body { font-family: "微软雅黑", sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fdf6e3; color: #333; line-height: 1.6; }
     h1 { text-align: center; color: #d2691e; border-bottom: 2px solid #d2691e; padding-bottom: 10px; }
     .info-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-    #usageInfo { font-weight: bold; color: #d2691e; text-align: center; }
-    input[type="text"] { width: 100%; padding: 12px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
-    button { width: 100%; padding: 12px; background-color: #d2691e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-bottom: 10px; }
+    #usageInfo { font-weight: bold; color: #d2691e; text-align: center; font-size: 15px; }
+    
+    .input-group { margin: 20px 0; }
+    label { font-weight: bold; display: block; margin-bottom: 8px; }
+    input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+    
+    button { width: 100%; padding: 14px; background-color: #d2691e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 10px; transition: 0.3s; }
     button:hover { background-color: #b25014; }
-    #result { margin-top: 20px; padding: 15px; background: #fffaf0; border-left: 5px solid #d2691e; display: none; white-space: pre-wrap; }
-    .qr-container { display: none; text-align: center; border: 2px dashed #d2691e; padding: 20px; background: #fff; margin-top: 20px; }
-    .qr-container img { width: 200px; height: 200px; margin: 10px 0; }
+    
+    #result { margin-top: 20px; padding: 15px; background: #fffaf0; border: 2px solid #d2691e; border-radius: 8px; display: none; white-space: pre-wrap; font-size: 16px; }
+    
+    .qr-container { display: none; text-align: center; border: 2px dashed #d2691e; padding: 20px; background: #fff; margin-top: 20px; border-radius: 10px; }
+    .qr-container img { width: 220px; height: 220px; margin: 15px 0; border: 1px solid #eee; }
     .pay-btn { background-color: #28a745; }
     .pay-btn:hover { background-color: #218838; }
+    
+    .footer { text-align: center; font-size: 12px; color: #999; margin-top: 40px; }
   </style>
 </head>
 <body>
 
-  <h1>☯ 小六壬占卜</h1>
+  <h1>☯ 小六壬在線推算</h1>
   
   <div class="info-card">
-    <p class="tip">此法源於李淳風《六壬時課》，依據當前農曆月、日、時推算。</p >
-    <div id="usageInfo">正在初始化...</div>
+    <div id="usageInfo">正在載入使用數據...</div>
   </div>
 
-  <input type="text" id="question" placeholder="請輸入心中所求之事（如：今日出行）">
-  <button id="calculateBtn">立即推算</button>
+  <div class="input-group">
+    <label>心中所求之事：</label>
+    <input type="text" id="question" placeholder="例如：今日面試結果如何？">
+  </div>
+
+  <button id="calculateBtn">立即開始推算</button>
 
   <div id="result"></div>
 
   <div class="qr-container" id="qrContainer">
-    <p style="color: #e74c3c; font-weight: bold;">免費次數已用完</p >
-    <p>支付 <b>¥2</b> 即可解鎖本次及後續 1 次測算</p >
-    <img src="alipay_qr.png" alt="請上傳你的收款碼">
-    <button class="pay-btn" id="confirmPayBtn">我已支付，立即查看結果</button>
+    <p style="color: #e74c3c; font-weight: bold; font-size: 18px;">免費次數已用完</p >
+    <p>掃碼支付 <b>¥2</b> 即可解鎖本次及後續 1 次可用次數</p >
+    <img src="alipay_qr.png" alt="支付寶收款碼">
+    <button class="pay-btn" id="confirmPayBtn">我已支付，立即解鎖並查看結果</button>
+  </div>
+
+  <div class="footer">
+    此算法基於唐代李淳風《六壬時課》<br>
+    僅供參考，請理性對待
   </div>
 
   <script>
@@ -51,90 +67,107 @@
       { name: "空亡", type: "凶", desc: "空亡事不祥，陰人少乖張。求財無利益，行人有災殃。" }
     ];
 
-    // 初始化存儲
-    let usage = parseInt(localStorage.getItem('lr_usage') || '0');
-    let extra = parseInt(localStorage.getItem('lr_extra') || '0');
     const FREE_LIMIT = 5;
 
-    function getRemaining() {
-      return Math.max((FREE_LIMIT + extra) - usage, 0);
+    // --- 數據持久化與獲取 ---
+    function getStoredData() {
+      return {
+        usage: parseInt(localStorage.getItem('lr_usage') || '0'),
+        extra: parseInt(localStorage.getItem('lr_extra') || '0')
+      };
     }
 
-    function updateUI() {
-      const remain = getRemaining();
-      document.getElementById('usageInfo').innerText = `可用次數：${remain} (已使用：${usage})`;
-      if (remain > 0) {
+    // --- 更新 UI 顯示 ---
+    function refreshUI() {
+      const data = getStoredData();
+      const remain = (FREE_LIMIT + data.extra) - data.usage;
+      const displayRemain = Math.max(remain, 0);
+      
+      document.getElementById('usageInfo').innerHTML = 
+        `可用次數：<span style="font-size:1.4em; color:#d2691e;">${displayRemain}</span> <br>` +
+        `<small>(免費:${FREE_LIMIT} | 已購:${data.extra} | 已用:${data.usage})</small>`;
+      
+      // 如果剩餘次數 > 0，隱藏支付框
+      if (displayRemain > 0) {
         document.getElementById('qrContainer').style.display = 'none';
       }
     }
 
-    // 核心算法：獲取農曆並計算
-    function doCalculation() {
+    // --- 核心推算邏輯 ---
+    function executeCalculation() {
       const q = document.getElementById('question').value.trim();
-      if (!q) return alert("請輸入問題");
+      if (!q) {
+        alert("請輸入您要占卜的事情。");
+        return;
+      }
 
       // 1. 獲取當前時間
       const now = new Date();
-      const solarYear = now.getFullYear();
-      const solarMonth = now.getMonth() + 1;
-      const solarDay = now.getDate();
-      const hour = now.getHours();
-
-      // 2. 轉換為農曆 (使用 solarlunar 庫)
-      const lunar = solarLunar.solar2lunar(solarYear, solarMonth, solarDay);
+      // 2. 轉換農曆 (solarlunar)
+      const lunar = solarLunar.solar2lunar(now.getFullYear(), now.getMonth() + 1, now.getDate());
       
-      // 3. 計算時辰數 (子時=1, 丑時=2...)
+      // 3. 計算時辰 (12時辰制)
+      const hour = now.getHours();
       const hourIndex = Math.floor((hour + 1) / 2) % 12 + 1;
-      const hourName = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"][Math.floor((hour + 1) / 2) % 12];
+      const hourNames = ["子","丑","寅","卯","辰","巳","午","未","申","酉","戌","亥"];
+      const currentHourName = hourNames[Math.floor((hour + 1) / 2) % 12];
 
-      // 4. 小六壬推算公式：(月+日+時-2) % 6
-      // 傳統數法：從大安起月，月上起日，日上起時
+      // 4. 小六壬推算公式 (月+日+時-3) % 6
       let resIdx = (lunar.lMonth + lunar.lDay + hourIndex - 3) % 6;
       const result = liurenData[resIdx];
 
-      // 顯示結果
+      // 5. 展示結果
       const resDiv = document.getElementById('result');
       resDiv.style.display = 'block';
       resDiv.innerHTML = `
-<strong>【農曆時間】</strong>：${lunar.monthCn}${lunar.dayCn} ${hourName}時
+<strong>【農曆時間】</strong>：${lunar.monthCn}${lunar.dayCn} ${currentHourName}時
 <strong>【所求之事】</strong>：${q}
-<strong>【推算結果】</strong>：<span style="color: #d2691e; font-size: 1.2em;">${result.name} (${result.type})</span>
-<strong>【卦辭短評】</strong>：${result.desc}
+<hr style="border:0; border-top:1px solid #d2691e;">
+<strong>【推算結果】</strong>：<span style="color:#e74c3c; font-size:1.2em;">${result.name} (${result.type})</span>
+<strong>【卦辭解析】</strong>：${result.desc}
       `;
 
-      // 扣除次數
-      usage++;
-      localStorage.setItem('lr_usage', usage);
-      updateUI();
+      // 6. 記錄使用次數
+      const data = getStoredData();
+      localStorage.setItem('lr_usage', data.usage + 1);
+      
+      // 7. 更新 UI
+      refreshUI();
     }
 
-    // 監聽：點擊推算
-    document.getElementById('calculateBtn').onclick = function() {
-      if (getRemaining() > 0) {
-        doCalculation();
+    // --- 按鈕事件監聽 ---
+
+    // 點擊：立即推算
+    document.getElementById('calculateBtn').addEventListener('click', function() {
+      const data = getStoredData();
+      const remain = (FREE_LIMIT + data.extra) - data.usage;
+
+      if (remain > 0) {
+        executeCalculation();
       } else {
+        // 顯示支付區域並滾動到底部
         document.getElementById('qrContainer').style.display = 'block';
-        window.scrollTo(0, document.body.scrollHeight);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       }
-    };
+    });
 
-    // 監聽：點擊確認支付
-    document.getElementById('confirmPayBtn').onclick = function() {
-      // 1. 增加次數 (這裡增加1次額外權限)
-      extra++;
-      localStorage.setItem('lr_extra', extra);
+    // 點擊：我已支付
+    document.getElementById('confirmPayBtn').addEventListener('click', function() {
+      // 1. 讀取並增加權限
+      const data = getStoredData();
+      localStorage.setItem('lr_extra', data.extra + 1);
       
-      // 2. 更新UI（會隱藏支付框）
-      updateUI();
+      // 2. 同步 UI
+      refreshUI();
       
-      // 3. 立即執行測算
-      doCalculation();
+      // 3. 直接進行推算（會消耗剛才加的這 1 次）
+      executeCalculation();
       
-      alert("支付已確認，解鎖成功！");
-    };
+      alert("支付確認成功！已為您解鎖測算。");
+    });
 
-    updateUI();
+    // 初始化頁面
+    refreshUI();
   </script>
 </body>
 </html>
-
