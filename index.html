@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>小六壬即时测算工具</title>
+<style>
+body { font-family: Arial; max-width: 600px; margin: 0 auto; padding: 20px; }
+input, button { font-size: 16px; padding: 10px; margin: 5px 0; width: 100%; }
+.result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; }
+.history { margin-top: 20px; }
+.pay { margin-top: 20px; display:none; }
+.note { color: #555; font-size: 14px; margin-top: 10px; }
+.step { margin-left: 15px; color: #333; }
+.free-note { color:#d35400; font-weight:bold; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<h2>小六壬即时测算工具</h2>
+
+<p class="free-note">前3次免费，之后每次需要 ¥5</p >
+
+<!-- 心血来潮说明 -->
+<div class="note">
+  此方法适用于临时起意、犹豫、心血来潮等状态。<br>
+  此方法算问题一次即可，切不可算第二次。  <br>
+  占卜记录会保存在当前浏览器，可查看历史记录。
+</div>
+
+<p>请输入你要算的问题：</p >
+<input type="text" id="question" placeholder="输入你的问题"/>
+<button id="startBtn">六任测算</button>
+
+<div class="result" id="result"></div>
+
+<div class="pay" id="pay">
+  <p>免费次数已用完，每次需要 ¥5</p >
+  < img src="./alipay_qr.png" alt="支付宝收款二维码" style="width:200px;">
+  <button id="paidBtn">已支付，继续测算</button>
+</div>
+
+<h3>历史记录</h3>
+<div class="history" id="history"></div>
+
+<script>
+// -------------------- 六壬课体 & 解释 --------------------
+const states = ["大安","流连","速喜","赤口","小吉","空亡"];
+const liurenData = {
+  "大安": {type:"吉", text:"平安吉祥，诸事顺利，约一周左右可见结果。（大安大概一个礼拜左右，平安吉祥，诸事顺利。）"},
+  "流连": {type:"凶", text:"事情停滞不前，此行不利，需谨慎行事。（流连代表事情停滞不前，此行不利。）"},
+  "速喜": {type:"吉", text:"立竿见影，马上看到结果，适合找寻失物。（速喜用于找寻重要文件、失物、财物，马上看到结果。）"},
+  "赤口": {type:"凶", text:"有第三者介入，小人窃财，是非多因人为因素。（赤口有第三者介入，小人窃财，是非多因人为因素。）"},
+  "小吉": {type:"吉", text:"吉祥顺利，但需等待，约两周左右可见结果。（小吉大约两周左右可见结果，吉祥顺利。）"},
+  "空亡": {type:"凶", text:"事情难成，可以断念，建议放弃或另寻他法。（空亡事情难成，可以断念或另寻他法。）"}
+};
+
+// -------------------- 免费计数 & 历史 --------------------
+let freeCount = parseInt(localStorage.getItem("freeCount")) || 3;
+let historyList = JSON.parse(localStorage.getItem("historyList") || "[]");
+
+function renderHistory() {
+  const hDiv = document.getElementById("history");
+  hDiv.innerHTML = "";
+  historyList.slice().reverse().forEach(h=>{
+    const d = document.createElement("div");
+    d.innerHTML = `${h.time} - ${h.question} → ${h.result} (${h.type})`;
+    hDiv.appendChild(d);
+  });
+}
+renderHistory();
+
+// -------------------- 农历显示 --------------------
+const lunarMonths = ["正月","二月","三月","四月","五月","六月","七月","八月","九月","十月","冬月","腊月"];
+const lunarDays = ["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十",
+                    "十一","十二","十三","十四","十五","十六","十七","十八","十九","二十",
+                    "廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
+const hourMap = ["子时","丑时","寅时","卯时","辰时","巳时","午时","未时","申时","酉时","戌时","亥时"];
+
+function getLunarDate(date){
+    return {
+        monthStr: lunarMonths[date.getMonth()] || "腊月",
+        dayStr: lunarDays[date.getDate()-1] || "初一"
+    };
+}
+
+function getHourStr(hour){
+    return hourMap[Math.floor((hour + 1)/2) % 12];
+}
+
+const pad = n => n.toString().padStart(2,'0');
+
+// -------------------- 小六壬计算 --------------------
+function calcStep(startStateIndex, steps){
+  return (startStateIndex + steps) % 6;
+}
+
+// -------------------- 测算逻辑 --------------------
+function runDivine(){
+  const question = document.getElementById("question").value.trim();
+  if(!question){ alert("请输入问题"); return; }
+
+  if(freeCount <=0){
+    document.getElementById("pay").style.display = "block";
+    return;
+  }
+
+  const now = new Date();
+  const lunar = getLunarDate(now);
+  const hourStr = getHourStr(now.getHours());
+
+  // 小六壬走步展示
+  let outputSteps = [];
+  let startIndex = 0; // 大安
+  let end1 = calcStep(startIndex,11);
+  outputSteps.push(`从${states[startIndex]}开始走11步 → ${states[end1]}`);
+  let end2 = calcStep(end1,27);
+  outputSteps.push(`从${states[end1]}开始走27步 → ${states[end2]}`);
+  let end3 = calcStep(end2,6);
+  outputSteps.push(`从${states[end2]}开始走6步 → ${states[end3]}`);
+
+  const finalResult = states[end3];
+  const explanation = liurenData[finalResult];
+
+  // 显示结果
+  document.getElementById("result").innerHTML = `
+    <p>当前时间：${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}</p >
+    <p>传统农历：${lunar.monthStr} ${lunar.dayStr} ${hourStr}</p >
+    <p>问题：${question}</p >
+    <p>课体最终结果：${finalResult} (${explanation.type})</p >
+    <p>解读：${explanation.text}</p >
+    <p>走步过程：</p >
+    ${outputSteps.map(s=>`<div class="step">${s}</div>`).join('')}
+  `;
+
+  // 保存历史
+  const rec = { question, result: finalResult, type: explanation.type, time: `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}` };
+  historyList.push(rec);
+  localStorage.setItem("historyList", JSON.stringify(historyList));
+  renderHistory();
+
+  freeCount -=1;
+  localStorage.setItem("freeCount", freeCount);
+}
+
+// -------------------- 支付按钮逻辑 --------------------
+document.getElementById("paidBtn").addEventListener("click", ()=>{
+  freeCount = 1; // 支付后增加一次使用次数
+  localStorage.setItem("freeCount", freeCount);
+  document.getElementById("pay").style.display = "none";
+  runDivine();
+});
+
+// -------------------- 六任测算按钮 --------------------
+document.getElementById("startBtn").addEventListener("click", runDivine);
+
+</script>
+</body>
+</html>
