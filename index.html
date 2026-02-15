@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>六任测算</title>
+  <title>六壬推算法</title>
   <style>
     body {
       font-family: "微软雅黑", sans-serif;
@@ -18,21 +18,23 @@
   </style>
 </head>
 <body>
-  <h1>六壬测算</h1>
-  <p>此方法来自汉唐，适用于犹豫、心血来潮的状态的做决策</p >
-  <p>此方法注意事项：不要重复算第二次，否则害到自己</p >
-  <p>李淳风是中国古代著名的易学家。据说，六壬时课就是他创造的一种推算方法，记载于中国的集各类占卜之术的代表作《玉匣记》。</p >
+  <h1>六壬推算，以果决行</h1>
+  <p>此方法来自李淳风，适用于犹豫、心血来潮时做决策，本人也用，非常准确。</p >
+  <p>李淳风是中国古代著名的易学家。据说，六壬就是他创造的一种推算方法，记载于中国的集各类占卜之术的代表作《玉匣记》。</p >
+  <p>此方法注意事项：每个时辰内只算一次，不要重复算第二次</p >
+  <p>此方法推算出凶，可以放弃行动，另作他法</p>
+  <p>此方法前5次免费，后续1元/次</p>
   
-  <label>请输入你要算的事情：</label>
+  <label>请输入你要计算的事情：</label>
   <input type="text" id="question" placeholder="输入问题">
 
-  <button id="calculate">六壬测算</button>
+  <button id="calculate">开始六壬测算</button>
   <button id="viewHistory">查看历史记录</button>
 
   <div id="result"></div>
   
 <div class="qr-container" id="qrContainer" style="display:none;">
-  <p>请扫描支付 ¥5 后继续使用：</p >
+  <p>请扫描支付 ¥1 后继续使用：</p >
   <img src="alipay_qr.png" alt="支付宝二维码" style="width:200px;height:auto;display:block;margin:0 auto;">
   <button id="paid">已支付</button>
 </div>
@@ -52,10 +54,10 @@
 
     const stepSequence = [11,27,6]; // 月令日令时令步数
 
-    const maxFree = 3; // 前3次免费
+    const maxFree = 5; // 前5次免费
     let usage = Number(localStorage.getItem("liurenUsage") || 0);
 
-    // 获取六任下标
+    // 获取六壬下标
     function getLiurenIndex(startIndex, steps){
       return (startIndex + steps) % liurenArr.length;
     }
@@ -136,6 +138,7 @@ ${liurenArr[hourIndex].desc}
   </script>
 </body>
 </html>
+
 
 
 
