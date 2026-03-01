@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>六壬推算 - 以果決行</title>
+  <style>
+    body { font-family: "微软雅黑", sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fdf6e3; color: #333; line-height: 1.6; }
+    h1 { text-align: center; color: #d2691e; border-bottom: 2px solid #d2691e; padding-bottom: 10px; }
+
+    /* 說明區域 */
+    .intro-section { background: #fff; padding: 15px; border-radius: 8px; border-left: 5px solid #d2691e; margin-bottom: 20px; font-size: 14px; }
+    .intro-section p { margin: 5px 0; }
+    .warning { color: #e74c3c; font-weight: bold; }
+
+    .info-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; text-align: center; }
+    #lunarDisplay { font-size: 1.2em; font-weight: bold; color: #8b4513; margin: 10px 0; }
+
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    input[type="text"] { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+
+    .btn-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    button { flex: 1; padding: 14px; background-color: #d2691e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    button#viewHistoryBtn { background-color: #8b4513; }
+    button:hover { opacity: 0.9; }
+
+    #result, #historyBox { margin-top: 20px; padding: 15px; background: #fffaf0; border: 2px solid #d2691e; border-radius: 8px; display: none; white-space: pre-wrap; }
+
+    .footer { text-align: center; font-size: 12px; color: #999; margin-top: 40px; }
+  </style>
+</head>
+<body>
+
+  <h1>六壬推算，以果決行</h1>
+
+  <div class="intro-section">
+    <p>此方法來自唐代天官李淳風，適用於：猶豫、心血來潮時，推算做決策。本人也在用，非常準確。</p>
+    <p>李淳風是中國古代著名的易學家。據說，六壬就是他創造的一種推算方法，記載於中國的集各類占卜之術的代表作《玉匣記》。</p>
+    <p class="warning">注意事項：每個時辰內只算一次问题，不要重複算第二次。推算出凶，可以放棄行動，另作他法。</p>
+  </div>
+
+  <div class="info-card">
+    <p>當前農曆時間</p>
+    <div id="lunarDisplay">正在獲取時辰...</div>
+  </div>
+
+  <label>請輸入你要計算的事情：</label>
+  <input type="text" id="question" placeholder="輸入問題（例如：今日面試）">
+
+  <div class="btn-group">
+    <button id="calculateBtn">開始推算</button>
+    <button id="viewHistoryBtn">查看記錄</button>
+  </div>
+
+  <div id="result"></div>
+  <div id="historyBox"></div>
+
+  <script>
+    // --- 1. 農曆轉換與工具 ---
+    const LunarTool = {
+      monthNames: ["正月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "冬月", "臘月"],
+      dayNames: ["初一", "初二", "初三", "初四", "初五", "初六", "初七", "初八", "初九", "初十",
+                 "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十",
+                 "廿一", "廿二", "廿三", "廿四", "廿五", "廿六", "廿七", "廿八", "廿九", "三十"],
+      hourNames: ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"],
+
+      getNow() {
+        const date = new Date();
+        const lunarStr = new Intl.DateTimeFormat('zh-u-ca-chinese', { month: 'numeric', day: 'numeric' }).format(date);
+        const parts = lunarStr.match(/(\d+)/g);
+        const mIdx = parseInt(parts[0]) - 1;
+        const dIdx = parseInt(parts[1]) - 1;
+        const hour = date.getHours();
+        const hIdx = Math.floor((hour + 1) / 2) % 12;
+
+        return {
+          mName: this.monthNames[mIdx],
+          dName: this.dayNames[dIdx],
+          hName: this.hourNames[hIdx],
+          mVal: mIdx + 1,
+          dVal: dIdx + 1,
+          hVal: hIdx + 1,
+          full: `農曆${this.monthNames[mIdx]}${this.dayNames[dIdx]} ${this.hourNames[hIdx]}時`
+        };
+      }
+    };
+
+    // --- 2. 六壬數據 ---
+    const liurenData = [
+      { name: "大安", type: "吉", desc: "平安吉祥，諸事順利，約一週左右可見結果。", note: "大安，大概一個禮拜左右見結果。" },
+      { name: "流連", type: "凶", desc: "事情停滯不前，此行不利，需謹慎行事。", note: "流連，代表事情停滯不前啊，此行不利。" },
+      { name: "速喜", type: "吉", desc: "立竿見影，馬上看到結果，適合找尋失物。", note: "速喜，是立竿見影，馬上看到，我們用在找尋東西，失落東西，或者是找你比較重要的文件，掉錢啊，家裡面遭竊啊。" },
+      { name: "赤口", type: "凶", desc: "有第三者介入，小人竊財，是非多因人為因素。", note: "赤口，代表有第三者介入，有小人竊財，是非有人為的因素。" },
+      { name: "小吉", type: "吉", desc: "吉祥順利，但需等待，約兩周左右見結果。", note: "小吉，大概兩個禮拜會看到。" },
+      { name: "空亡", type: "凶", desc: "事情難成，可以斷念，建議放棄或另尋他法。", note: "空亡，就是你不用看了，你可以斷念了。" }
+    ];
+
+    // --- 3. 數據持久化（僅歷史記錄）---
+    const getHistory = () => JSON.parse(localStorage.getItem('lr_history') || '[]');
+    const saveHistory = (h) => localStorage.setItem('lr_history', JSON.stringify(h.slice(0, 20)));
+
+    // --- 4. 介面邏輯 ---
+    function updateDisplay() {
+      const now = LunarTool.getNow();
+      document.getElementById('lunarDisplay').innerText = now.full;
+    }
+
+    function doCalc() {
+      const q = document.getElementById('question').value.trim();
+      if (!q) return alert("請輸入問題");
+
+      const t = LunarTool.getNow();
+      const resIdx = (t.mVal + t.dVal + t.hVal - 3) % 6;
+      const res = liurenData[resIdx];
+
+      const resultText = `【時間】：${t.full}\n【所求】：${q}\n【結果】：${res.name} (${res.type})\n【解釋】：${res.desc}\n【秘法要點】：${res.note}`;
+
+      const resDiv = document.getElementById('result');
+      resDiv.style.display = 'block';
+      resDiv.innerHTML = `<strong style="color:#d2691e;">推算結果：</strong>\n${resultText}`;
+      document.getElementById('historyBox').style.display = 'none';
+
+      // 保存到歷史記錄
+      const history = getHistory();
+      history.unshift(resultText);
+      saveHistory(history);
+    }
+
+    // --- 5. 事件監聽 ---
+    document.getElementById('calculateBtn').onclick = doCalc;
+
+    document.getElementById('viewHistoryBtn').onclick = () => {
+      const history = getHistory();
+      if (history.length === 0) return alert("暫無記錄");
+      const hBox = document.getElementById('historyBox');
+      hBox.style.display = hBox.style.display === 'block' ? 'none' : 'block';
+      document.getElementById('result').style.display = 'none';
+      hBox.innerHTML = `<strong>歷史記錄：</strong>\n` + history.join('\n------------------------\n');
+    };
+
+    // 初始化
+    setInterval(updateDisplay, 1000);
+    updateDisplay();
+  </script>
+</body>
+</html>
